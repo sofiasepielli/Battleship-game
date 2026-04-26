@@ -31,7 +31,7 @@ const initialState: GameState = {
   currentTurn: 'player',
   gameStatus: 'placement',
   lastHit: null,
-  message: 'Place your Carrier (5 cells).',
+  message: 'Place your Carrier (5 cells). Press R to rotate.',
   aiTargetQueue: [],
   aiMode: 'hunt',
   placement: {

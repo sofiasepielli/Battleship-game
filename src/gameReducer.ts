@@ -60,6 +60,17 @@ const getNextUnplacedShip = (placedShips: Ship[]): ShipType | null => {
   return ALL_SHIP_TYPES.find(t => !placedTypes.has(t)) ?? null;
 };
 
+const SHIP_LABELS: Record<ShipType, string> = {
+  carrier: 'Carrier (5 cells)',
+  battleship: 'Battleship (4 cells)',
+  cruiser: 'Cruiser (3 cells)',
+  submarine: 'Submarine (3 cells)',
+  destroyer: 'Destroyer (2 cells)',
+};
+
+const placementMessage = (nextShip: ShipType | null): string =>
+  nextShip ? `Place your ${SHIP_LABELS[nextShip]}.` : 'All ships placed! Click "Start Game" to begin.';
+
 export const gameReducer = (state: GameState, action: GameAction): GameState => {
   switch (action.type) {
     case 'PLACE_SHIPS': {
@@ -149,7 +160,6 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       const newPlacedShips = [...placedShips, newShip];
       const newBoard = placeShipsOnBoard(createEmptyBoard(), newPlacedShips);
       const nextShip = getNextUnplacedShip(newPlacedShips);
-      const allPlaced = newPlacedShips.length === 5;
 
       return {
         ...state,
@@ -164,9 +174,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
           selectedShipType: nextShip,
           hoverCell: null,
         },
-        message: allPlaced
-          ? 'All ships placed! Click "Start Game" to begin.'
-          : `Place your ${nextShip ? nextShip.charAt(0).toUpperCase() + nextShip.slice(1) : 'ships'}.`,
+        message: placementMessage(nextShip),
       };
     }
 
@@ -190,7 +198,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
           placedShips: newPlacedShips,
           selectedShipType: action.shipType,
         },
-        message: `Place your ${action.shipType.charAt(0).toUpperCase() + action.shipType.slice(1)}.`,
+        message: `Place your ${SHIP_LABELS[action.shipType]}.`,
       };
     }
 
@@ -231,7 +239,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
           placedShips: [],
           hoverCell: null,
         },
-        message: 'Place your Carrier (5 cells).',
+        message: placementMessage('carrier'),
       };
     }
 
@@ -419,7 +427,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
         currentTurn: 'player',
         gameStatus: 'placement',
         lastHit: null,
-        message: 'Place your Carrier (5 cells).',
+        message: placementMessage('carrier'),
         aiTargetQueue: [],
         aiMode: 'hunt',
         placement: {
