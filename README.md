@@ -4,7 +4,7 @@ A single-player Battleship game built with React, TypeScript, and Tailwind CSS. 
 
 ## 🚀 Live Demo
 
-**Play the game here:** [https://sofiasepielli.github.io/Battleship-game/](https://sofiasepielli.github.io/Battleship-game/)
+**Play the game here:** [https://sofiasepielli.github.io/battleship/](https://sofiasepielli.github.io/battleship/)
 
 ## 📸 Screenshots
 
@@ -15,7 +15,7 @@ A single-player Battleship game built with React, TypeScript, and Tailwind CSS. 
 - **Frontend:** React 18 + TypeScript
 - **Build Tool:** Vite
 - **Styling:** Tailwind CSS
-- **Deployment:** Vercel
+- **Deployment:** GitHub Pages
 - **State Management:** React useReducer
 
 ## 🎮 Game Features
@@ -119,7 +119,7 @@ npm run lint
 
 ## 🚀 Deployment
 
-The project is automatically deployed to Vercel via GitHub integration. Pushing to the `main` branch triggers a new deployment.
+The project is deployed to GitHub Pages using the gh-pages package. Run `npm run deploy` to build and publish to the gh-pages branch.
 
 ## 📱 Mobile Support
 

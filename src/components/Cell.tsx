@@ -1,4 +1,4 @@
-import { Cell as CellType, CellStatus } from '../types';
+import { Cell as CellType } from '../lib/types';
 
 interface CellProps {
   cell: CellType;

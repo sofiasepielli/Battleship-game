@@ -1,4 +1,4 @@
-import { GameState, GameStatus, Ship, Cell, ShipType, SHIP_SIZES } from './types';
+import { GameState, GameStatus, Ship, Cell } from './lib/types';
 
 export type GameAction =
   | { type: 'PLACE_SHIPS'; playerShips: Ship[]; aiShips: Ship[] }
