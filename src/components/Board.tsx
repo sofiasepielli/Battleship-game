@@ -1,5 +1,5 @@
 import { Cell } from './Cell';
-import { Player } from '../types';
+import { Player } from '../lib/types';
 
 interface BoardProps {
   player: Player;

@@ -1,9 +1,9 @@
 import { useReducer, useEffect, useCallback } from 'react';
 import { Board } from './components/Board';
 import { gameReducer } from './gameReducer';
-import { generateRandomShips } from './shipPlacement';
-import { getAIShot } from './aiPlayer';
-import { GameState } from './types';
+import { generateRandomShips } from './lib/shipPlacement';
+import { getAIShot } from './lib/aiPlayer';
+import { GameState } from './lib/types';
 
 const initialState: GameState = {
   player: {
