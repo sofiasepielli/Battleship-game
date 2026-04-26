@@ -24,9 +24,18 @@ export interface Player {
   shots: Set<string>;
 }
 
-export type GamePhase = 'setup' | 'playing' | 'gameOver';
+export type Orientation = 'horizontal' | 'vertical';
 
-export type GameStatus = 'setup' | 'playerTurn' | 'aiTurn' | 'playerWon' | 'aiWon';
+export type GamePhase = 'placement' | 'playing' | 'gameOver';
+
+export type GameStatus = 'placement' | 'setup' | 'playerTurn' | 'aiTurn' | 'playerWon' | 'aiWon';
+
+export interface PlacementState {
+  selectedShipType: ShipType | null;
+  orientation: Orientation;
+  placedShips: Ship[];
+  hoverCell: [number, number] | null;
+}
 
 export interface GameState {
   player: Player;
@@ -37,6 +46,7 @@ export interface GameState {
   message: string;
   aiTargetQueue: [number, number][];
   aiMode: 'hunt' | 'target';
+  placement: PlacementState;
 }
 
 export const SHIP_SIZES: Record<ShipType, number> = {
