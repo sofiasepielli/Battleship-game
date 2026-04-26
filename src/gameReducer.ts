@@ -1,4 +1,5 @@
-import { GameState, GameStatus, Ship, Cell } from './lib/types';
+import { GameState, Ship, Cell, ShipType, SHIP_SIZES } from './lib/types';
+import { isValidPlacement, getShipPositions, getOccupiedPositions, generateRandomShips } from './lib/shipPlacement';
 
 export type GameAction =
   | { type: 'PLACE_SHIPS'; playerShips: Ship[]; aiShips: Ship[] }
@@ -6,7 +7,15 @@ export type GameAction =
   | { type: 'PLAYER_SHOT'; row: number; col: number }
   | { type: 'AI_SHOT'; row: number; col: number }
   | { type: 'SET_MESSAGE'; message: string }
-  | { type: 'RESET_GAME' };
+  | { type: 'RESET_GAME' }
+  | { type: 'SELECT_SHIP'; shipType: ShipType }
+  | { type: 'TOGGLE_ORIENTATION' }
+  | { type: 'SET_HOVER'; row: number; col: number }
+  | { type: 'CLEAR_HOVER' }
+  | { type: 'PLACE_SHIP_MANUAL'; row: number; col: number }
+  | { type: 'PICK_UP_SHIP'; shipType: ShipType }
+  | { type: 'AUTO_PLACE' }
+  | { type: 'RESET_PLACEMENT' };
 
 const createEmptyBoard = (): Cell[][] => {
   const board: Cell[][] = [];
@@ -38,11 +47,29 @@ const checkShipSunk = (ship: Ship, board: Cell[][]): boolean => {
   );
 };
 
-const checkWinCondition = (playerShips: Ship[], aiShips: Ship[]): GameStatus => {
+const checkWinCondition = (playerShips: Ship[], aiShips: Ship[]): 'playerTurn' | 'playerWon' | 'aiWon' => {
   if (playerShips.every(ship => ship.sunk)) return 'aiWon';
   if (aiShips.every(ship => ship.sunk)) return 'playerWon';
   return 'playerTurn';
 };
+
+const ALL_SHIP_TYPES: ShipType[] = ['carrier', 'battleship', 'cruiser', 'submarine', 'destroyer'];
+
+const getNextUnplacedShip = (placedShips: Ship[]): ShipType | null => {
+  const placedTypes = new Set(placedShips.map(s => s.type));
+  return ALL_SHIP_TYPES.find(t => !placedTypes.has(t)) ?? null;
+};
+
+const SHIP_LABELS: Record<ShipType, string> = {
+  carrier: 'Carrier (5 cells)',
+  battleship: 'Battleship (4 cells)',
+  cruiser: 'Cruiser (3 cells)',
+  submarine: 'Submarine (3 cells)',
+  destroyer: 'Destroyer (2 cells)',
+};
+
+const placementMessage = (nextShip: ShipType | null): string =>
+  nextShip ? `Place your ${SHIP_LABELS[nextShip]}.` : 'All ships placed! Click "Start Game" to begin.';
 
 export const gameReducer = (state: GameState, action: GameAction): GameState => {
   switch (action.type) {
@@ -67,7 +94,176 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       };
     }
 
+    case 'SELECT_SHIP': {
+      if (state.gameStatus !== 'placement') return state;
+      const alreadyPlaced = state.placement.placedShips.some(s => s.type === action.shipType);
+      if (alreadyPlaced) return state;
+      return {
+        ...state,
+        placement: {
+          ...state.placement,
+          selectedShipType: action.shipType,
+        },
+      };
+    }
+
+    case 'TOGGLE_ORIENTATION': {
+      if (state.gameStatus !== 'placement') return state;
+      return {
+        ...state,
+        placement: {
+          ...state.placement,
+          orientation: state.placement.orientation === 'horizontal' ? 'vertical' : 'horizontal',
+        },
+      };
+    }
+
+    case 'SET_HOVER': {
+      if (state.gameStatus !== 'placement') return state;
+      return {
+        ...state,
+        placement: {
+          ...state.placement,
+          hoverCell: [action.row, action.col],
+        },
+      };
+    }
+
+    case 'CLEAR_HOVER': {
+      if (state.gameStatus !== 'placement') return state;
+      return {
+        ...state,
+        placement: {
+          ...state.placement,
+          hoverCell: null,
+        },
+      };
+    }
+
+    case 'PLACE_SHIP_MANUAL': {
+      if (state.gameStatus !== 'placement' || !state.placement.selectedShipType) return state;
+      const { selectedShipType, orientation, placedShips } = state.placement;
+      const size = SHIP_SIZES[selectedShipType];
+      const occupied = getOccupiedPositions(placedShips);
+
+      if (!isValidPlacement(action.row, action.col, size, orientation, occupied)) return state;
+
+      const positions = getShipPositions(action.row, action.col, size, orientation);
+      const newShip: Ship = {
+        id: `${selectedShipType}-${Date.now()}-${Math.random()}`,
+        type: selectedShipType,
+        size,
+        positions,
+        hits: 0,
+        sunk: false,
+      };
+      const newPlacedShips = [...placedShips, newShip];
+      const newBoard = placeShipsOnBoard(createEmptyBoard(), newPlacedShips);
+      const nextShip = getNextUnplacedShip(newPlacedShips);
+
+      return {
+        ...state,
+        player: {
+          ...state.player,
+          ships: newPlacedShips,
+          board: newBoard,
+        },
+        placement: {
+          ...state.placement,
+          placedShips: newPlacedShips,
+          selectedShipType: nextShip,
+          hoverCell: null,
+        },
+        message: placementMessage(nextShip),
+      };
+    }
+
+    case 'PICK_UP_SHIP': {
+      if (state.gameStatus !== 'placement') return state;
+      const shipToRemove = state.placement.placedShips.find(s => s.type === action.shipType);
+      if (!shipToRemove) return state;
+
+      const newPlacedShips = state.placement.placedShips.filter(s => s.type !== action.shipType);
+      const newBoard = placeShipsOnBoard(createEmptyBoard(), newPlacedShips);
+
+      return {
+        ...state,
+        player: {
+          ...state.player,
+          ships: newPlacedShips,
+          board: newBoard,
+        },
+        placement: {
+          ...state.placement,
+          placedShips: newPlacedShips,
+          selectedShipType: action.shipType,
+        },
+        message: `Place your ${SHIP_LABELS[action.shipType]}.`,
+      };
+    }
+
+    case 'AUTO_PLACE': {
+      if (state.gameStatus !== 'placement') return state;
+      const allShips = generateRandomShips(state.placement.placedShips);
+      const newBoard = placeShipsOnBoard(createEmptyBoard(), allShips);
+
+      return {
+        ...state,
+        player: {
+          ...state.player,
+          ships: allShips,
+          board: newBoard,
+        },
+        placement: {
+          ...state.placement,
+          placedShips: allShips,
+          selectedShipType: null,
+          hoverCell: null,
+        },
+        message: 'All ships placed! Click "Start Game" to begin.',
+      };
+    }
+
+    case 'RESET_PLACEMENT': {
+      if (state.gameStatus !== 'placement') return state;
+      return {
+        ...state,
+        player: {
+          ships: [],
+          board: createEmptyBoard(),
+          shots: new Set(),
+        },
+        placement: {
+          selectedShipType: 'carrier',
+          orientation: 'horizontal',
+          placedShips: [],
+          hoverCell: null,
+        },
+        message: placementMessage('carrier'),
+      };
+    }
+
     case 'START_GAME': {
+      if (state.gameStatus === 'placement') {
+        if (state.placement.placedShips.length !== 5) return state;
+        const aiShips = generateRandomShips();
+        const aiBoard = placeShipsOnBoard(createEmptyBoard(), aiShips);
+        return {
+          ...state,
+          ai: {
+            ships: aiShips,
+            board: aiBoard,
+            shots: new Set(),
+          },
+          gameStatus: 'playerTurn',
+          message: 'Your turn! Click on the AI grid to fire.',
+          placement: {
+            ...state.placement,
+            selectedShipType: null,
+            hoverCell: null,
+          },
+        };
+      }
       return {
         ...state,
         gameStatus: 'playerTurn',
@@ -87,8 +283,8 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       newAiShots.add(shotKey);
       
       const targetCell = state.ai.board[row][col];
-      let newAiBoard = state.ai.board.map(row => row.map(cell => ({ ...cell })));
-      let newAiShips = state.ai.ships.map(ship => ({ ...ship }));
+      const newAiBoard = state.ai.board.map(r => r.map(cell => ({ ...cell })));
+      const newAiShips = state.ai.ships.map(ship => ({ ...ship }));
       let message = '';
       
       if (targetCell.status === 'ship') {
@@ -103,7 +299,6 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
               hitShip.sunk = true;
               message = `You sunk the ${hitShip.type}!`;
               
-              // Mark all cells of sunk ship as 'sunk'
               hitShip.positions.forEach(([r, c]) => {
                 newAiBoard[r][c].status = 'sunk';
               });
@@ -142,11 +337,10 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       newPlayerShots.add(shotKey);
       
       const targetCell = state.player.board[row][col];
-      let newPlayerBoard = state.player.board.map(row => row.map(cell => ({ ...cell })));
-      let newPlayerShips = state.player.ships.map(ship => ({ ...ship }));
+      const newPlayerBoard = state.player.board.map(r => r.map(cell => ({ ...cell })));
+      const newPlayerShips = state.player.ships.map(ship => ({ ...ship }));
       let message = '';
       let lastHit: [number, number] | null = null;
-      // Remove the current shot from the target queue to prevent stale entries
       let aiTargetQueue = state.aiTargetQueue.filter(([r, c]) => r !== row || c !== col);
       let aiMode = state.aiMode;
       
@@ -163,16 +357,13 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
               hitShip.sunk = true;
               message = `AI sunk your ${hitShip.type}!`;
               
-              // Mark all cells of sunk ship as 'sunk'
               hitShip.positions.forEach(([r, c]) => {
                 newPlayerBoard[r][c].status = 'sunk';
               });
               
-              // Return to hunt mode when ship is sunk
               aiMode = 'hunt';
               aiTargetQueue = [];
             } else {
-              // Switch to target mode and add adjacent cells to queue
               aiMode = 'target';
               const adjacentCells = [
                 [row - 1, col], [row + 1, col],
@@ -191,7 +382,6 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
         newPlayerBoard[row][col].status = 'miss';
         message = 'AI missed!';
         
-        // If in target mode and queue is empty, revert to hunt mode
         if (aiMode === 'target' && aiTargetQueue.length === 0) {
           aiMode = 'hunt';
         }
@@ -235,11 +425,17 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
           shots: new Set(),
         },
         currentTurn: 'player',
-        gameStatus: 'setup',
+        gameStatus: 'placement',
         lastHit: null,
-        message: 'Click "Randomize" to place ships.',
+        message: placementMessage('carrier'),
         aiTargetQueue: [],
         aiMode: 'hunt',
+        placement: {
+          selectedShipType: 'carrier',
+          orientation: 'horizontal',
+          placedShips: [],
+          hoverCell: null,
+        },
       };
     }
 

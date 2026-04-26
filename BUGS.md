@@ -98,4 +98,38 @@ Already-shot cells now show `cursor-not-allowed` and ignore clicks.
 
 ---
 
-*Previously documented bugs (#1–#7 in the original BUGS.md) were already addressed in the initial codebase. The bugs above were discovered during a subsequent QA review of the shipped code.*
+---
+
+## Bug #8: Placement Status Messages Missing Ship Size
+
+**Symptom:** After placing a ship during the manual placement phase, the status message said "Place your Battleship." without indicating the ship's size, while the initial message said "Place your Carrier (5 cells)." — inconsistent messaging made it harder for new players to know how many cells the next ship would occupy.
+
+**Root Cause:** The PLACE_SHIP_MANUAL, PICK_UP_SHIP, and RESET_PLACEMENT reducer actions each built their own message strings using inline string formatting, without including the ship size. Only the initial state in App.tsx included the size.
+
+**Fix:** Created a shared `placementMessage()` helper and `SHIP_LABELS` lookup in `gameReducer.ts` to produce consistent messages like "Place your Battleship (4 cells)." across all placement actions.
+
+---
+
+## Bug #9: Desktop Placement Required Two Clicks Instead of One
+
+**Symptom:** On desktop, clicking a cell to place a ship required two clicks — one to show the preview, one to confirm — even though the hover preview was already visible via `mouseEnter`. This made the placement feel sluggish on desktop.
+
+**Root Cause:** The initial mobile tap-to-place implementation checked if `hoverCell` matched the clicked cell before placing. On desktop, `mouseEnter` fires before `click`, so `hoverCell` was already set by the time the click arrived. However, the first click was consumed by `SET_HOVER` instead of `PLACE_SHIP_MANUAL` because the `handlePlacementClick` only dispatched `PLACE_SHIP_MANUAL` when `hoverCell` already matched, but didn't account for the desktop hover flow.
+
+**Fix:** Updated `handlePlacementClick` to check if `hoverCell` already matches the clicked cell (desktop via mouseEnter) and place immediately. If not (mobile with no hover), it sets the hover first, requiring a second tap to confirm. This gives single-click placement on desktop and tap-to-preview on mobile.
+
+---
+
+## QA Pass: Manual Placement Feature (Bugs #8–#9)
+
+**Test scenarios verified (no additional bugs found):**
+- Placing ships at board edges with both horizontal and vertical orientations — preview correctly shows red when ship extends off-board
+- Overlapping placement blocked — preview shows red when hovering over occupied cells
+- Pick up and replace already-placed ships — board state cleans up correctly, ship returns to selection
+- Auto-Place with 0, some, and all ships already placed — preserves manual placements
+- Reset button clears board and resets to first ship selection
+- Rotation near board edge — preview correctly marks invalid placements
+- Start Game disabled until all 5 ships placed, enabled once all placed
+- Play Again returns to placement phase with empty grid (not auto-start)
+
+*Bugs #8–#9 were discovered during QA testing of the manual ship placement feature.*

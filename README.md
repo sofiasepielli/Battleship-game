@@ -24,7 +24,9 @@ A single-player Battleship game built with React, TypeScript, and Tailwind CSS. 
 - **Smart AI opponent** with hunt and target modes
 - **Visual feedback** for hits, misses, and sunk ships
 - **Mobile-responsive** design
-- **Random ship placement** with re-roll option
+- **Manual ship placement** with rotation and visual hover previews (green = valid, red = invalid)
+- **Auto-place option** to randomly place remaining ships while preserving manual placements
+- **Mobile-friendly placement** with tap-to-preview and tap-to-confirm flow
 - **Turn-based gameplay** with automatic AI turns
 
 ### AI Difficulty
@@ -68,7 +70,7 @@ The AI uses a two-mode targeting system:
 - **`src/components/`** - React components (Board, Cell)
 
 ### Game Flow
-1. **Setup Phase:** Ships are randomly placed for both player and AI
+1. **Placement Phase:** Player manually places ships on the grid (or uses Auto-Place)
 2. **Playing Phase:** Players alternate turns firing at opponent grids
 3. **End Phase:** Game ends when all ships of one side are sunk
 
@@ -89,7 +91,7 @@ During development, I conducted thorough QA testing and documented several bugs 
    - Submarine (3 cells)
    - Destroyer (2 cells)
 
-2. **Setup:** Ships are placed randomly and cannot overlap or extend off the board
+2. **Setup:** Place ships manually on the grid or use Auto-Place. Ships cannot overlap or extend off the board. Press R to rotate ships.
 
 3. **Gameplay:** 
    - Players take turns firing at opponent grids
@@ -140,7 +142,7 @@ This project is open source and available under the [MIT License](LICENSE).
 ## 🔍 Known Limitations
 
 - No sound effects or complex animations
-- No manual ship placement (random only)
+- No drag-and-drop ship placement (click-to-place only)
 - No multiplayer or persistence features
 - AI difficulty is fixed (no adjustable levels)
 
