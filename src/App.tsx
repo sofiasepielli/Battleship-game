@@ -81,10 +81,14 @@ function App() {
   };
 
   const handlePlacementClick = useCallback((row: number, col: number) => {
-    if (gameState.gameStatus === 'placement' && gameState.placement.selectedShipType) {
+    if (gameState.gameStatus !== 'placement' || !gameState.placement.selectedShipType) return;
+    const { hoverCell } = gameState.placement;
+    if (hoverCell && hoverCell[0] === row && hoverCell[1] === col) {
       dispatch({ type: 'PLACE_SHIP_MANUAL', row, col });
+    } else {
+      dispatch({ type: 'SET_HOVER', row, col });
     }
-  }, [gameState.gameStatus, gameState.placement.selectedShipType]);
+  }, [gameState.gameStatus, gameState.placement.selectedShipType, gameState.placement.hoverCell]);
 
   const handlePlacementHover = useCallback((row: number, col: number) => {
     if (gameState.gameStatus === 'placement') {
