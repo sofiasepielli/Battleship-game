@@ -4,7 +4,7 @@ A single-player Battleship game built with React, TypeScript, and Tailwind CSS. 
 
 ## 🚀 Live Demo
 
-**Play the game here:** [https://battleship-game.vercel.app](https://battleship-game.vercel.app)
+**Play the game here:** [https://sofiasepielli.github.io/Battleship-game/](https://sofiasepielli.github.io/Battleship-game/)
 
 ## 📸 Screenshots
 
@@ -37,7 +37,7 @@ The AI uses a two-mode targeting system:
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/battleship-game.git
+   git clone https://github.com/sofiasepielli/Battleship-game.git
    cd battleship-game
    ```
 
