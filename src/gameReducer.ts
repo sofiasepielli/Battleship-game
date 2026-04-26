@@ -1,4 +1,4 @@
-import { GameState, GameStatus, Ship, Cell, ShipType, SHIP_SIZES } from './types';
+import { GameState, GameStatus, Ship, Cell } from './types';
 
 export type GameAction =
   | { type: 'PLACE_SHIPS'; playerShips: Ship[]; aiShips: Ship[] }
@@ -146,7 +146,8 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       let newPlayerShips = state.player.ships.map(ship => ({ ...ship }));
       let message = '';
       let lastHit: [number, number] | null = null;
-      let aiTargetQueue = [...state.aiTargetQueue];
+      // Remove the current shot from the target queue to prevent stale entries
+      let aiTargetQueue = state.aiTargetQueue.filter(([r, c]) => r !== row || c !== col);
       let aiMode = state.aiMode;
       
       if (targetCell.status === 'ship') {
@@ -190,10 +191,9 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
         newPlayerBoard[row][col].status = 'miss';
         message = 'AI missed!';
         
-        // If in target mode and this was a miss, continue with queue
-        if (aiMode === 'target' && aiTargetQueue.length > 0) {
-          // Remove the current position from queue if it was there
-          aiTargetQueue = aiTargetQueue.filter(([r, c]) => r !== row || c !== col);
+        // If in target mode and queue is empty, revert to hunt mode
+        if (aiMode === 'target' && aiTargetQueue.length === 0) {
+          aiMode = 'hunt';
         }
       }
       
@@ -207,7 +207,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
           ships: newPlayerShips,
           shots: newPlayerShots,
         },
-        gameStatus: gameStatus === 'aiTurn' ? 'playerTurn' : gameStatus,
+        gameStatus: gameStatus === 'playerTurn' ? 'playerTurn' : gameStatus,
         message,
         lastHit,
         aiTargetQueue,

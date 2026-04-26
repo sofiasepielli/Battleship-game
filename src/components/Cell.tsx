@@ -1,4 +1,4 @@
-import { Cell as CellType, CellStatus } from '../types';
+import { Cell as CellType } from '../types';
 
 interface CellProps {
   cell: CellType;
@@ -8,16 +8,18 @@ interface CellProps {
 }
 
 export const Cell = ({ cell, isPlayerBoard = false, isClickable = false, onClick }: CellProps) => {
+  const isAlreadyShot = cell.status === 'hit' || cell.status === 'miss' || cell.status === 'sunk';
+  const canClick = isClickable && !isAlreadyShot;
+
   const getCellClass = () => {
-    const baseClasses = 'w-8 h-8 border border-gray-400 flex items-center justify-center text-xs font-bold transition-colors duration-200';
+    const baseClasses = 'w-8 h-8 sm:w-9 sm:h-9 border border-gray-400 flex items-center justify-center text-xs font-bold transition-colors duration-200';
     
     if (isPlayerBoard) {
-      // Player's board - show ships
       switch (cell.status) {
         case 'empty':
-          return `${baseClasses} bg-blue-100 hover:bg-blue-200`;
+          return `${baseClasses} bg-blue-100`;
         case 'ship':
-          return `${baseClasses} bg-gray-700 hover:bg-gray-600`;
+          return `${baseClasses} bg-gray-700`;
         case 'hit':
           return `${baseClasses} bg-red-600 text-white`;
         case 'miss':
@@ -28,18 +30,16 @@ export const Cell = ({ cell, isPlayerBoard = false, isClickable = false, onClick
           return baseClasses;
       }
     } else {
-      // AI's board - hide ships
       switch (cell.status) {
         case 'empty':
-          return `${baseClasses} bg-blue-100 ${isClickable ? 'hover:bg-blue-200 cursor-pointer' : ''}`;
         case 'ship':
-          return `${baseClasses} bg-blue-100 ${isClickable ? 'hover:bg-blue-200 cursor-pointer' : ''}`;
+          return `${baseClasses} bg-blue-100 ${canClick ? 'hover:bg-blue-300 cursor-pointer' : 'cursor-default'}`;
         case 'hit':
-          return `${baseClasses} bg-red-600 text-white`;
+          return `${baseClasses} bg-red-600 text-white cursor-not-allowed`;
         case 'miss':
-          return `${baseClasses} bg-gray-300`;
+          return `${baseClasses} bg-gray-300 cursor-not-allowed`;
         case 'sunk':
-          return `${baseClasses} bg-red-800 text-white`;
+          return `${baseClasses} bg-red-800 text-white cursor-not-allowed`;
         default:
           return baseClasses;
       }
@@ -59,7 +59,7 @@ export const Cell = ({ cell, isPlayerBoard = false, isClickable = false, onClick
   return (
     <div
       className={getCellClass()}
-      onClick={() => isClickable && onClick && onClick(cell.row, cell.col)}
+      onClick={() => canClick && onClick && onClick(cell.row, cell.col)}
     >
       {getCellContent()}
     </div>
