@@ -6,9 +6,6 @@ A single-player Battleship game built with React, TypeScript, and Tailwind CSS. 
 
 **Play the game here:** [https://sofiasepielli.github.io/Battleship-game/](https://sofiasepielli.github.io/Battleship-game/)
 
-## 📸 Screenshots
-
-![Battleship Game](https://via.placeholder.com/800x400/1e40af/ffffff?text=Battleship+Game+Screenshot)
 
 ## 🛠️ Tech Stack
 
